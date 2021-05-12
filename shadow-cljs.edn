@@ -1,0 +1,19 @@
+;; shadow-cljs configuration
+{:source-paths ["src/cljs" "src/test"]
+
+ :dependencies [[reagent "1.0.0"]
+                [com.taoensso/timbre "5.1.2"]
+                [re-frame "1.2.0"]]
+
+ :dev-http     {8088 "public"}
+
+ :nrepl        {:port 5050}
+
+ :builds       {:app {:target     :browser
+                      :output-dir "public/scripts/"
+                      :asset-path "/scripts/"
+                      :compiler-options {:output-feature-set :es7}
+                      :modules    {:core {:init-fn simple-grid.core/main}}}}}
+
+
+
