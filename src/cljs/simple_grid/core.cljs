@@ -10,6 +10,8 @@
                  :layout  [{:id "one" :grid-data {:x 0 :y 0 :w 2 :h 2}}]})
 
 
+;; region ; Subscriptions
+
 (rf/reg-event-db
   :init
   (fn-traced [db [_ data]]
@@ -39,7 +41,10 @@
   (fn [db [_ widget-id]]
     (get-in db [:widgets widget-id :local])))
 
+;; endregion
 
+
+;; region ; Event Handlers
 
 (rf/reg-event-db
   :add-widget
@@ -50,7 +55,6 @@
       (#(if (contains? (:timers db) data)
           %
           (assoc-in % [:timers data] 0))))))
-
 
 
 
@@ -71,6 +75,7 @@
     (assoc-in db [:timers widget-id] 0)))
 
 
+
 (rf/reg-event-db
   :local
   (fn-traced [db [_ widget-id]]
@@ -84,11 +89,13 @@
   (fn-traced [db [_ widget-id]]
     (assoc db :widgets (dissoc (:widgets db) widget-id))))
 
+;; endregion
 
+
+;; region ; Widgets
 
 (defn- make-content [name sub data]
   (str sub " :: " @data))
-
 
 
 (defn- title-bar [name]
@@ -96,12 +103,10 @@
    [:h3 name]])
 
 
-
 (defn- base [name content]
   [:div.widget.parent {:key name}
    (title-bar name)
    [:div.widget.widget-content content]])
-
 
 
 (defn- widget [name w]
@@ -121,7 +126,9 @@
          [:p (str "local: " @local)]
          [:p (make-content name (:data w) data)]]))))
 
+;; endregion
 
+;; region ; Grid
 
 (defn- simple-grid []
   (log/info "simple-grid OUTER")
@@ -133,7 +140,9 @@
          (for [[k w] @widgets]
            ^{:key k} [widget k w]))])))
 
+;; endregion
 
+;; region ; main-page
 
 (defn- timers []
   (let [timers (rf/subscribe [:timers])]
@@ -143,7 +152,6 @@
          (map (fn [[k t]] ^{:key k}
                 [:div {:on-click #(rf/dispatch [:reset k])} t])
            @timers))])))
-
 
 
 (defn- main-page []
@@ -156,11 +164,11 @@
    [timers]
    [simple-grid]])
 
+;; endregion
 
 
 (defn- ^:dev/after-load-async mount-components []
   (rd/render #'main-page (.getElementById js/document "app")))
-
 
 
 (defn main []
@@ -170,8 +178,7 @@
   (mount-components))
 
 
-
-
+; rich comments
 (comment
   @re-frame.db/app-db
   (rf/dispatch-sync [:add-widget "two" "two" 0])
