@@ -17,6 +17,7 @@
 
 ;; endregion
 
+
 ;; region ; Subscriptions
 
 (rf/reg-event-db
@@ -74,9 +75,7 @@
       (#(if (contains? (:layout db) name)
           %
           (-> %
-            (assoc-in [:layout] (assoc (:layout db)
-                                  name
-                                  (assoc default-widget :i name)))
+            (assoc-in [:layout name] (assoc default-widget :i name))
             (assoc-in [:widgets name :data] data)
             (assoc-in [:widgets name :local] 0)
             ((fn [x] (if (contains? (:timers db) data)
@@ -101,7 +100,6 @@
     (assoc-in db [:timers widget-id] 0)))
 
 
-
 (rf/reg-event-db
   :local
   (fn-traced [db [_ widget-id]]
@@ -109,13 +107,12 @@
       (assoc-in db [:widgets widget-id :local] (inc local)))))
 
 
-
 (rf/reg-event-db
   :delete-widget
   (fn-traced [db [_ widget-id]]
     (-> db
       (assoc :widgets (dissoc (:widgets db) widget-id))
-      (assoc :layout (remove #(= widget-id (:i %)) (:layout db))))))
+      (assoc :layout (dissoc (:layout db) widget-id)))))
 
 
 (rf/reg-event-db
@@ -127,6 +124,7 @@
 (defn- update-layout [db {:keys [i] :as new-layout}]
   (assoc-in db [:layout i] new-layout))
 
+
 (rf/reg-event-db
   :update-layout
   (fn-traced [db [_ new-layout]]
@@ -135,21 +133,6 @@
       (assoc db :layout (zipmap (map :i cooked) cooked)))))
 
 ;; endregion
-
-(comment
-  (def db @re-frame.db/app-db)
-  (def i "one")
-  (def new-layout [{:i "one" :x 0 :y 0 :w 2 :h 2}
-                   {:i "two" :x 0 :y 0 :w 2 :h 2}])
-
-  (map (fn [x] (:i x)) new-layout)
-  (zipmap (map :i new-layout) new-layout)
-
-  (assoc db :layout (zipmap (map :i new-layout) new-layout))
-
-  (map #(zipmap '(:i :x :y :w :h) %)
-    (map (juxt :i :x :y :w :h) new-layout))
-  ())
 
 
 ;; region ; Widgets
@@ -361,4 +344,20 @@
     (for [{:keys [i]} @layout]
       ^{:key i} [:div.widget {:key i}
                  [widget i]]))
+  ())
+
+
+(comment
+  (def db @re-frame.db/app-db)
+  (def i "one")
+  (def new-layout [{:i "one" :x 0 :y 0 :w 2 :h 2}
+                   {:i "two" :x 0 :y 0 :w 2 :h 2}])
+
+  (map (fn [x] (:i x)) new-layout)
+  (zipmap (map :i new-layout) new-layout)
+
+  (assoc db :layout (zipmap (map :i new-layout) new-layout))
+
+  (map #(zipmap '(:i :x :y :w :h) %)
+    (map (juxt :i :x :y :w :h) new-layout))
   ())
