@@ -93,6 +93,11 @@
                 {}
                 (:timers db)))))
 
+(rf/reg-event-db
+  :tick-one
+  (fn-traced [db [_ id]]
+    (assoc-in db [:timers id] (inc (get-in db [:timers id])))))
+
 
 (rf/reg-event-db
   :reset
@@ -264,7 +269,7 @@
       [:div.flex-container
        (doall
          (map (fn [[k t]] ^{:key k}
-                [:div {:on-click #(rf/dispatch [:reset k])} t])
+                [:div {:on-click #(rf/dispatch [:tick-one k])} t])
            @timers))])))
 
 
