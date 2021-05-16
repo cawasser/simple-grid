@@ -70,6 +70,19 @@
 ;; endregion
 
 
+
+;; region ; Event Support
+
+(defn- save-layout [db]
+  (into {}
+    (map (fn [[k v]]
+           (let [widget (get-in db [:widgets k])]
+             {k (assoc widget :layout v)}))
+      (:layout db))))
+
+;; endregion
+
+
 ;; region ; Event Handlers
 
 (rf/reg-event-db
@@ -155,11 +168,7 @@
 (rf/reg-event-fx
   :save-layout
   (fn-traced [{:keys [db]} _]
-    (let [ret (into {}
-                (map (fn [[k v]]
-                       (let [widget (get-in db [:widgets k])]
-                         {k (assoc widget :layout v)}))
-                  (:layout db)))]
+    (let [ret (save-layout db)]
       (log/info ":save" ret))))
 
 
