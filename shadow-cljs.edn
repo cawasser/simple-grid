@@ -16,7 +16,7 @@
                       :asset-path "/scripts/"
                       :compiler-options {:output-feature-set :es7}
                       :modules    {:core {:init-fn simple-grid.core/main}}
-                      :devtools     {:watch-dir "../../bases/vanilla/resources/public",
+                      :devtools     {:watch-dir "resources/public",
                                      :preloads  [day8.re-frame-10x.preload]},
                       :dev          {:closure-defines {re_frame.trace.trace_enabled?                true
                                                        "re_frame.trace.trace_enabled_QMARK_"        true,

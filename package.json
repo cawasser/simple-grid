@@ -3,6 +3,7 @@
     "highlight.js": "9.18.1",
     "react": "16.14.0",
     "react-dom": "16.14.0",
+    "react-grid-layout": "^1.2.5",
     "react-highlight.js": "^1.0.7"
   }
 }
