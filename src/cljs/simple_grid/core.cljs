@@ -10,12 +10,14 @@
 
 ;; region ; DEFAULTS
 
-(def default-db {:widgets {"one" {:name "one" :type "alpha" :data "one" :local 0}}
-                 :timers  {"one" 0}
-                 :layout  {"one" {:i "one" :x 0 :y 0 :w 2 :h 3}}})
+(def default-db {:timers {"one" 0 "two" 0}})
 
-(def default-layout
-  {:x 0 :y 0 :w 2 :h 3})
+(def default-layout {:x 0 :y 0 :w 2 :h 3})
+
+(def starting-widgets {"one"  {:name   "one" :type "alpha" :data "one" :local 0
+                               :layout {:i "one" :x 0 :y 0 :w 2 :h 3}}
+                       "four" {:name   "four" :type "alpha" :data "two" :local 0
+                               :layout {:i "four" :x 4 :y 0 :w 2 :h 3}}})
 
 ;; endregion
 
@@ -139,6 +141,28 @@
                    (map (juxt :i :x :y :w :h) new-layout))]
       (assoc db :layout (zipmap (map :i cooked) cooked)))))
 
+
+(rf/reg-event-db
+  :load-layout
+  (fn-traced [db [_ data]]
+    (let [widgets (into {} (map (fn [[k v]] {k (dissoc v :layout)}) data))
+          layout  (into {} (map (fn [[k v]] {k (:layout v)}) data))]
+      (-> db
+        (assoc :widgets widgets)
+        (assoc :layout layout)))))
+
+
+(rf/reg-event-fx
+  :save-layout
+  (fn-traced [{:keys [db]} _]
+    (let [ret (into {}
+                (map (fn [[k v]]
+                       (let [widget (get-in db [:widgets k])]
+                         {k (assoc widget :layout v)}))
+                  (:layout db)))]
+      (log/info ":save" ret))))
+
+
 ;; endregion
 
 
@@ -147,7 +171,7 @@
 (defn- make-content
   "FORM-1"
   [widget]
-  (let [type (:type widget)
+  (let [type     (:type widget)
         build-fn (get-in @registry/registry [type :build-fn])]
     (build-fn widget)))
 
@@ -285,6 +309,8 @@
   (log/info "main-page")
   [:div
    [:h3 "Simple Grid"]
+   [:button.button {:on-click #(rf/dispatch-sync [:load-layout starting-widgets])} "LOAD"]
+   [:button.button {:on-click #(rf/dispatch-sync [:save-layout])} "SAVE"]
    [:button.button {:on-click #(rf/dispatch-sync [:tick])} "Tick!"]
    [:button.button {:on-click #(rf/dispatch [:add-widget "one" "alpha" "one"])} "Add \"one\""]
    [:button.button {:on-click #(rf/dispatch [:add-widget "two" "alpha" "two"])} "Add \"two\""]
@@ -423,5 +449,29 @@
   ())
 
 
+; load and save, splitting/combining :layout and :widgets
+(comment
+  (def db @re-frame.db/app-db)
+  (def data starting-widgets)
+  ; load
+  (let [widgets (into {} (map (fn [[k v]] {k (dissoc v :layout)}) data))
+        layout  (into {} (map (fn [[k v]] {k (:layout v)}) data))]
+    (-> db
+      (assoc :widgets widgets)
+      (assoc :layout layout)))
+
+
+  ; save
+  (def db @re-frame.db/app-db)
+  (into {}
+    (map (fn [[k v]]
+           (let [widget (get-in db [:widgets k])]
+             {k (assoc widget :layout v)}))
+      (:layout db)))
+
+  (rf/dispatch-sync [:save])
+
+
+  ())
 
 ;; endregion
