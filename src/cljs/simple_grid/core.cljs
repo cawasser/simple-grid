@@ -4,15 +4,17 @@
             [re-frame.core :as rf]
             [taoensso.timbre :as log]
             [day8.re-frame.tracing :refer-macros [fn-traced defn-traced]]
-            ["react-grid-layout" :refer (Responsive) :as ReactGridLayout]))
+            ["react-grid-layout" :refer (Responsive) :as ReactGridLayout]
+            [simple-grid.widget.registry :as registry]
+            [simple-grid.widget.alpha]))
 
 ;; region ; DEFAULTS
 
-(def default-db {:widgets {"one" {:data "one" :local 0}}
+(def default-db {:widgets {"one" {:name "one" :type "alpha" :data "one" :local 0}}
                  :timers  {"one" 0}
                  :layout  {"one" {:i "one" :x 0 :y 0 :w 2 :h 3}}})
 
-(def default-widget
+(def default-layout
   {:x 0 :y 0 :w 2 :h 3})
 
 ;; endregion
@@ -70,14 +72,13 @@
 
 (rf/reg-event-db
   :add-widget
-  (fn-traced [db [_ name data]]
+  (fn-traced [db [_ name type data]]
     (-> db
       (#(if (contains? (:layout db) name)
           %
           (-> %
-            (assoc-in [:layout name] (assoc default-widget :i name))
-            (assoc-in [:widgets name :data] data)
-            (assoc-in [:widgets name :local] 0)
+            (assoc-in [:layout name] (assoc default-layout :i name))
+            (assoc-in [:widgets name] {:name name :type type :data data :local 0})
             ((fn [x] (if (contains? (:timers db) data)
                        x
                        (assoc-in x [:timers data] 0))))))))))
@@ -92,6 +93,7 @@
                   (assoc new-map key (inc value)))
                 {}
                 (:timers db)))))
+
 
 (rf/reg-event-db
   :tick-one
@@ -142,8 +144,37 @@
 
 ;; region ; Widgets
 
-(defn- make-content [name sub data]
-  [:p (str sub " :: " @data)])
+(defn- make-content [widget]
+  (let [type (:type widget)
+        build-fn (get-in @registry/registry [type :build-fn])]
+    (build-fn widget)))
+  ;(let [data  @(rf/subscribe [:timer (:data widget)])
+  ;      local @(rf/subscribe [:local (:name widget)])]
+  ;  [:div
+  ;   [:button.button {:on-click #(rf/dispatch [:reset (:data widget)])} "reset"]
+  ;   [:button.button {:on-click #(rf/dispatch [:local (:name widget)])} "local"]
+  ;   [:p (str "local: " local)]
+  ;   [:p (str "timer " (:data widget) ": " data)]]))
+
+
+(comment
+  @re-frame.db/app-db
+  (def name "one")
+  (def widget @(rf/subscribe [:widget name]))
+
+  (def type (:type widget))
+  (get-in @registry/registry [type :build-fn])
+
+  (def data (rf/subscribe [:timer (:data @widget)]))
+  (def local (rf/subscribe [:local i]))
+
+  (:data @widget)
+  [:div
+   [:button.button {:on-click #(rf/dispatch [:reset (:data @widget)])} "reset"]
+   [:button.button {:on-click #(rf/dispatch [:local i])} "local"]
+   [:p (str "local: " @local)]
+   [:p (str (:data @widget) " :: " @data)]]
+  ())
 
 
 (defn- title-bar [name]
@@ -163,19 +194,22 @@
 
   (rf/dispatch-sync [:reset-local name])
 
-  (let [widget @(rf/subscribe [:widget name])
-        data   (rf/subscribe [:timer (:data widget)])
-        local  (rf/subscribe [:local name])]
+  (let [widget @(rf/subscribe [:widget name])]
     (fn []
       (log/info "widget INNER" name)
-      (base
-        name
-        [:div
-         [:button.button {:on-click #(rf/dispatch [:reset (:data widget)])} "reset"]
-         [:button.button {:on-click #(rf/dispatch [:local name])} "local"]
-         [:p (str "local: " @local)]
-         (make-content name (:data widget) data)]))))
+      (base name
+        (make-content widget)))))
 
+
+(comment
+  (def name "one")
+  (let [widget @(rf/subscribe [:widget name])]
+    ;(fn []
+    ;  (log/info "widget INNER" name)
+    (base
+      name
+      [make-content widget]))
+  ())
 ;; endregion
 
 
@@ -278,32 +312,32 @@
   [:div
    [:h3 "Simple Grid"]
    [:button.button {:on-click #(rf/dispatch-sync [:tick])} "Tick!"]
-   [:button.button {:on-click #(rf/dispatch [:add-widget "one" "one"])} "Add \"one\""]
-   [:button.button {:on-click #(rf/dispatch [:add-widget "two" "two"])} "Add \"two\""]
-   [:button.button {:on-click #(rf/dispatch [:add-widget "three" "one"])} "Add \"three\""]
+   [:button.button {:on-click #(rf/dispatch [:add-widget "one" "alpha" "one"])} "Add \"one\""]
+   [:button.button {:on-click #(rf/dispatch [:add-widget "two" "alpha" "two"])} "Add \"two\""]
+   [:button.button {:on-click #(rf/dispatch [:add-widget "three" "alpha" "one"])} "Add \"three\""]
    [timers]
    ;[simple-grid]
-   ;[simple-responsive-grid]
+   ;[simple-responsive-grid]])
    [responsive-grid]])
 
 ;; endregion
 
 
 (defn- ^:dev/after-load-async mount-components []
+  (rf/dispatch-sync [:init default-db])
   (rd/render #'main-page (.getElementById js/document "app")))
 
 
 (defn main []
   (log/info "Running!")
 
-  (rf/dispatch-sync [:init default-db])
   (mount-components))
 
 
 ;; region ; rich comments
 (comment
   @re-frame.db/app-db
-  (rf/dispatch-sync [:add-widget "two" "two" 0])
+  (rf/dispatch-sync [:add-widget "two" "alpha" "two"])
 
   (def db @re-frame.db/app-db)
 
@@ -323,8 +357,8 @@
               (:widgets db)))
 
   (rf/dispatch [:tick])
-  (rf/dispatch [:add-widget "two" "two"])
-  (rf/dispatch [:add-widget "three" "two"])
+  (rf/dispatch [:add-widget "two" "alpha" "two"])
+  (rf/dispatch [:add-widget "three" "alpha" "two"])
   (rf/dispatch [:reset "one"])
   (rf/dispatch [:reset "two"])
 
@@ -366,5 +400,30 @@
   (map #(zipmap '(:i :x :y :w :h) %)
     (map (juxt :i :x :y :w :h) new-layout))
   ())
+
+
+; refactoring :add-widget to include :name
+(comment
+  (rf/dispatch [:add-widget "two" "alpha" "two"])
+
+  (def db @re-frame.db/app-db)
+  (def name "two")
+  (def data "two")
+
+  (assoc-in db [:layout name] (assoc default-layout :i name))
+  (assoc-in db [:widgets name] {:name name :data data :local 0})
+
+  (-> db
+    (#(if (contains? (:layout db) name)
+        %
+        (-> %
+          (assoc-in [:layout name] (assoc default-layout :i name))
+          (assoc-in [:widgets name] {:name name :data data :local 0})
+          ((fn [x] (if (contains? (:timers db) data)
+                     x
+                     (assoc-in x [:timers data] 0))))))))
+
+  ())
+
 
 ;; endregion
