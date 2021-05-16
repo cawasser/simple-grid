@@ -148,33 +148,6 @@
   (let [type (:type widget)
         build-fn (get-in @registry/registry [type :build-fn])]
     (build-fn widget)))
-  ;(let [data  @(rf/subscribe [:timer (:data widget)])
-  ;      local @(rf/subscribe [:local (:name widget)])]
-  ;  [:div
-  ;   [:button.button {:on-click #(rf/dispatch [:reset (:data widget)])} "reset"]
-  ;   [:button.button {:on-click #(rf/dispatch [:local (:name widget)])} "local"]
-  ;   [:p (str "local: " local)]
-  ;   [:p (str "timer " (:data widget) ": " data)]]))
-
-
-(comment
-  @re-frame.db/app-db
-  (def name "one")
-  (def widget @(rf/subscribe [:widget name]))
-
-  (def type (:type widget))
-  (get-in @registry/registry [type :build-fn])
-
-  (def data (rf/subscribe [:timer (:data @widget)]))
-  (def local (rf/subscribe [:local i]))
-
-  (:data @widget)
-  [:div
-   [:button.button {:on-click #(rf/dispatch [:reset (:data @widget)])} "reset"]
-   [:button.button {:on-click #(rf/dispatch [:local i])} "local"]
-   [:p (str "local: " @local)]
-   [:p (str (:data @widget) " :: " @data)]]
-  ())
 
 
 (defn- title-bar [name]
@@ -201,15 +174,6 @@
         (make-content widget)))))
 
 
-(comment
-  (def name "one")
-  (let [widget @(rf/subscribe [:widget name])]
-    ;(fn []
-    ;  (log/info "widget INNER" name)
-    (base
-      name
-      [make-content widget]))
-  ())
 ;; endregion
 
 
@@ -371,6 +335,7 @@
   ())
 
 
+; layout stuff
 (comment
   (def db @re-frame.db/app-db)
   (def old-layout (:layout db))
@@ -386,6 +351,7 @@
   ())
 
 
+; zipmapping when the layout changes
 (comment
   (def db @re-frame.db/app-db)
   (def i "one")
@@ -424,6 +390,28 @@
                      (assoc-in x [:timers data] 0))))))))
 
   ())
+
+
+; play with make-content
+(comment
+  @re-frame.db/app-db
+  (def name "one")
+  (def widget @(rf/subscribe [:widget name]))
+
+  (def type (:type widget))
+  (get-in @registry/registry [type :build-fn])
+
+  (def data (rf/subscribe [:timer (:data @widget)]))
+  (def local (rf/subscribe [:local i]))
+
+  (:data @widget)
+  [:div
+   [:button.button {:on-click #(rf/dispatch [:reset (:data @widget)])} "reset"]
+   [:button.button {:on-click #(rf/dispatch [:local i])} "local"]
+   [:p (str "local: " @local)]
+   [:p (str (:data @widget) " :: " @data)]]
+  ())
+
 
 
 ;; endregion
