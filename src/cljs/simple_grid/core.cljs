@@ -144,25 +144,33 @@
 
 ;; region ; Widgets
 
-(defn- make-content [widget]
+(defn- make-content
+  "FORM-1"
+  [widget]
   (let [type (:type widget)
         build-fn (get-in @registry/registry [type :build-fn])]
     (build-fn widget)))
 
 
-(defn- title-bar [name]
+(defn- title-bar
+  "FORM-1"
+  [name]
   [:div.widget-banner.title-wrapper.grid-toolbar.move-cursor
    [:h3 {:style {:color :black}} name]
    [:button.button {:on-click #(rf/dispatch [:delete-widget name])} "Delete"]])
 
 
-(defn- base [name content]
+(defn- base
+  "FORM-1"
+  [name content]
   [:div.widget-parent
    (title-bar name)
    [:div.widget.widget-content content]])
 
 
-(defn- widget [name]
+(defn- widget
+  "FORM-2 on [:widget name]"
+  [name]
   (log/info "widget OUTER" name)
 
   (rf/dispatch-sync [:reset-local name])
@@ -234,7 +242,9 @@
         (rf/dispatch [:update-layout chg])))))
 
 
-(defn- responsive-grid []
+(defn- responsive-grid
+  "FORM-2 on :layout"
+  []
   (log/info "responsive-grid OUTER")
 
   (let [layout (rf/subscribe [:layout])]

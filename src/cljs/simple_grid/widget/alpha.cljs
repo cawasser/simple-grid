@@ -7,7 +7,9 @@
             [simple-grid.widget.registry :as registry]))
 
 
-(defn- make-content [widget]
+(defn- make-content
+  "FORM-1 by de-ref's ':data]' and ':local'"
+  [widget]
   (let [data  @(rf/subscribe [:timer (:data widget)])
         local @(rf/subscribe [:local (:name widget)])]
     [:div
