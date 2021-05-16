@@ -10,10 +10,10 @@
 
 (def default-db {:widgets {"one" {:data "one" :local 0}}
                  :timers  {"one" 0}
-                 :layout  {"one" {:i "one" :x 0 :y 0 :w 2 :h 2}}})
+                 :layout  {"one" {:i "one" :x 0 :y 0 :w 2 :h 3}}})
 
 (def default-widget
-  {:x 0 :y 0 :w 2 :h 2})
+  {:x 0 :y 0 :w 2 :h 3})
 
 ;; endregion
 
@@ -300,7 +300,7 @@
   (mount-components))
 
 
-; rich comments
+;; region ; rich comments
 (comment
   @re-frame.db/app-db
   (rf/dispatch-sync [:add-widget "two" "two" 0])
@@ -366,3 +366,5 @@
   (map #(zipmap '(:i :x :y :w :h) %)
     (map (juxt :i :x :y :w :h) new-layout))
   ())
+
+;; endregion
