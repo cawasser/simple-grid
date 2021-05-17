@@ -10,7 +10,9 @@
 
 ;; region ; DEFAULTS
 
-(def default-db {:timers {"one" 0 "two" 0}})
+(def default-db {:widgets {}
+                 :layout {}
+                 :timers {"one" 0 "two" 0}})
 
 (def default-layout {:x 0 :y 0 :w 2 :h 3})
 
@@ -18,6 +20,8 @@
                                :layout {:i "one" :x 0 :y 0 :w 2 :h 3}}
                        "four" {:name   "four" :type "alpha" :data "two" :local 0
                                :layout {:i "four" :x 4 :y 0 :w 2 :h 3}}})
+
+(def widget-store (atom starting-widgets))
 
 ;; endregion
 
@@ -169,7 +173,9 @@
   :save-layout
   (fn-traced [{:keys [db]} _]
     (let [ret (save-layout db)]
-      (log/info ":save" ret))))
+      (log/info ":save" ret)
+      (reset! widget-store ret)
+      {:db db})))
 
 
 ;; endregion
@@ -318,7 +324,7 @@
   (log/info "main-page")
   [:div
    [:h3 "Simple Grid"]
-   [:button.button {:on-click #(rf/dispatch-sync [:load-layout starting-widgets])} "LOAD"]
+   [:button.button {:on-click #(rf/dispatch-sync [:load-layout @widget-store])} "LOAD"]
    [:button.button {:on-click #(rf/dispatch-sync [:save-layout])} "SAVE"]
    [:button.button {:on-click #(rf/dispatch-sync [:tick])} "Tick!"]
    [:button.button {:on-click #(rf/dispatch [:add-widget "one" "alpha" "one"])} "Add \"one\""]
