@@ -314,6 +314,7 @@
   (let [timers (rf/subscribe [:timers])]
     (fn []
       [:div.flex-container
+       [:button.button {:on-click #(rf/dispatch-sync [:tick])} "Tick!"]
        (doall
          (map (fn [[k t]] ^{:key k}
                 [:div {:on-click #(rf/dispatch [:tick-one k])} t])
@@ -324,12 +325,13 @@
   (log/info "main-page")
   [:div
    [:h3 "Simple Grid"]
-   [:button.button {:on-click #(rf/dispatch-sync [:load-layout @widget-store])} "LOAD"]
-   [:button.button {:on-click #(rf/dispatch-sync [:save-layout])} "SAVE"]
-   [:button.button {:on-click #(rf/dispatch-sync [:tick])} "Tick!"]
-   [:button.button {:on-click #(rf/dispatch [:add-widget "one" "alpha" "one"])} "Add \"one\""]
-   [:button.button {:on-click #(rf/dispatch [:add-widget "two" "alpha" "two"])} "Add \"two\""]
-   [:button.button {:on-click #(rf/dispatch [:add-widget "three" "alpha" "one"])} "Add \"three\""]
+   [:div
+    [:button.button {:on-click #(rf/dispatch-sync [:load-layout @widget-store])} "LOAD"]
+    [:button.button {:on-click #(rf/dispatch-sync [:save-layout])} "SAVE"]]
+   [:div
+    [:button.button {:on-click #(rf/dispatch [:add-widget "one" "alpha" "one"])} "Add \"one\""]
+    [:button.button {:on-click #(rf/dispatch [:add-widget "two" "alpha" "two"])} "Add \"two\""]
+    [:button.button {:on-click #(rf/dispatch [:add-widget "three" "alpha" "one"])} "Add \"three\""]]
    [timers]
    ;[simple-grid]
    ;[simple-responsive-grid]])
