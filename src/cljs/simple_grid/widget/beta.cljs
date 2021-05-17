@@ -7,6 +7,7 @@
             [simple-grid.widget.registry :as registry]))
 
 
+;; region ; Re-frame handlers and subscriptions
 
 (rf/reg-event-db
   :append-local
@@ -27,26 +28,36 @@
   (fn [db [_ global-id]]
     (get-in db [:global global-id])))
 
+;; endregion
+
 
 (defn- row [idx item]
   ^{:key idx} [:tr [:td item]])
 
 
 (defn- table [data]
-  [:table.table
-   [:thead
-    [:tr [:th "Value"]]]
-   [:tbody
-    (doall
-      (for [[idx item] (map-indexed vector data)]
-        (row idx item)))]])
+  [:div.table-container {:style {:width       "50%"
+                                 :height      "5em"
+                                 :overflow-y  :auto
+                                 :white-space :nowrap
+                                 :border      "1px outset dark-blue"
+                                 :color       :black}}
+   [:table.table
+    [:thead {:style {:width  "100%"
+                     :border      "1px outset dark-blue"
+                     :color  :black}}
+     [:tr [:th "Value"]]]
+    [:tbody
+     (doall
+       (for [[idx item] (map-indexed vector data)]
+         (row idx item)))]]])
 
 
 (defn- make-content
   "FORM-1 by de-ref's ':data' and ':local'"
   [widget]
-  (let [global  @(rf/subscribe [:global (:name widget)])
-        local @(rf/subscribe [:local (:name widget)])]
+  (let [global @(rf/subscribe [:global (:name widget)])
+        local  @(rf/subscribe [:local (:name widget)])]
     [:div
      [:button.button {:on-click #(rf/dispatch [:append-local (:name widget) (rand-int 30)])} "local"]
      [:button.button {:on-click #(rf/dispatch [:append-global (:name widget) (rand-int 30)])} "global"]
