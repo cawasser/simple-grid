@@ -265,9 +265,10 @@
 (def dummy-widgets (r/atom [[:div.widget {:key "one" :style {:color :white}} "a"]
                             [:div.widget {:key "two" :style {:color :white}} "b"]
                             [:div.widget {:key "three" :style {:color :white}} "c"]]))
-(def dummy-reactive-widgets (r/atom [[:div.widget {:key "one"} [(fn [] [:div {:style {:color :white}} "a"])]]
-                                     [:div.widget {:key "two"} [(fn [] [:div {:style {:color :white}} "b"])]]
-                                     [:div.widget {:key "three"} [(fn [] [:div {:style {:color :white}} "c"])]]]))
+(defn- dummy-make-widget [name]
+  (fn []
+    [:div {:style {:color :white}} name]))
+(def dummy-reactive-widgets (r/atom ["a" "b" "c"]))
 
 
 (defn- simple-responsive-grid []
@@ -285,10 +286,11 @@
                :width      1536
                :row-height 50
                :style      {:height 500}
-               ;:breakpoints {:lg 2048 :md 1024 :sm 768 :xs 480 :xxs 0}
                :on-change  #()
                :item-props {:class "widget-component"}}]
-         @dummy-reactive-widgets)])))
+         (doall
+           (for [w @dummy-reactive-widgets]
+             [:div.widget {:key w} [dummy-make-widget w]])))])))
 
 
 (defn on-layout-change [new]
@@ -364,7 +366,7 @@
      "Add \"three\""]]
    [timers]
    ;[simple-grid]
-   ;[simple-responsive-grid]])
+   [simple-responsive-grid]
    [responsive-grid]])
 
 ;; endregion
