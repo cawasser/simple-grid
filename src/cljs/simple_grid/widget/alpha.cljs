@@ -8,7 +8,7 @@
 
 
 (defn- make-content
-  "FORM-1 by de-ref's ':data]' and ':local'"
+  "FORM-1 by de-ref's ':data' and ':local'"
   [widget]
   (let [data  @(rf/subscribe [:timer (:data widget)])
         local @(rf/subscribe [:local (:name widget)])]
@@ -22,6 +22,6 @@
 
 ; register this widget type so the grid can instantiate instances as needed
 ;
-(def widget-def {:type "alpha" :build-fn simple-grid.widget.alpha/make-content})
+(def widget-def {:type "alpha" :config {:local 0} :build-fn simple-grid.widget.alpha/make-content})
 (registry/register widget-def)
 

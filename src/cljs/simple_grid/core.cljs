@@ -6,7 +6,8 @@
             [day8.re-frame.tracing :refer-macros [fn-traced defn-traced]]
             ["react-grid-layout" :refer (Responsive) :as ReactGridLayout]
             [simple-grid.widget.registry :as registry]
-            [simple-grid.widget.alpha]))
+            [simple-grid.widget.alpha]
+            [simple-grid.widget.beta]))
 
 ;; region ; DEFAULTS
 
@@ -27,12 +28,6 @@
 
 
 ;; region ; Subscriptions
-
-(rf/reg-event-db
-  :init
-  (fn-traced [db [_ data]]
-    (merge db data)))
-
 
 (rf/reg-sub
   :widgets
@@ -74,7 +69,6 @@
 ;; endregion
 
 
-
 ;; region ; Event Support
 
 (defn- save-layout [db]
@@ -90,18 +84,47 @@
 ;; region ; Event Handlers
 
 (rf/reg-event-db
-  :add-widget
-  (fn-traced [db [_ name type data]]
-    (-> db
-      (#(if (contains? (:layout db) name)
-          %
-          (-> %
-            (assoc-in [:layout name] (assoc default-layout :i name))
-            (assoc-in [:widgets name] {:name name :type type :data data :local 0})
-            ((fn [x] (if (contains? (:timers db) data)
-                       x
-                       (assoc-in x [:timers data] 0))))))))))
+  :init
+  (fn-traced [db [_ data]]
+    (merge db data)))
 
+
+(rf/reg-event-db
+  :reset-db
+  (fn-traced [db [_ data]]
+    (merge db default-db)))
+
+
+(rf/reg-event-db
+  :add-widget
+  (fn-traced [db [_ name data widget-def]]
+    (let [locals (:config widget-def)
+          type (:type widget-def)]
+      (-> db
+        (#(if (contains? (:layout db) name)
+            %
+            (-> %
+              (assoc-in [:layout name] (assoc default-layout :i name))
+              (assoc-in [:widgets name] (merge locals
+                                          {:name name :type type :data data}))
+              ((fn [x] (if (contains? (:timers db) data)
+                         x
+                         (assoc-in x [:timers data] 0)))))))))))
+
+
+(comment
+  (rf/dispatch-sync [:init default-db])
+  (:widgets @re-frame.db/app-db)
+  (rf/dispatch [:add-widget "one" "one" (get @registry/registry "alpha")])
+  (rf/dispatch [:add-widget "three" "one" (get @registry/registry "beta")])
+  (rf/dispatch [:add-widget "ten" "ten" (get @registry/registry "beta")])
+
+  (def widget-def (get @registry/registry "alpha"))
+  (def locals (:config widget-def))
+  (merge locals
+    {:name name :type type :data data})
+
+  ())
 
 (rf/reg-event-db
   :tick
@@ -211,8 +234,6 @@
   "FORM-2 on [:widget name]"
   [name]
   (log/info "widget OUTER" name)
-
-  (rf/dispatch-sync [:reset-local name])
 
   (let [widget @(rf/subscribe [:widget name])]
     (fn []
@@ -329,9 +350,18 @@
     [:button.button {:on-click #(rf/dispatch-sync [:load-layout @widget-store])} "LOAD"]
     [:button.button {:on-click #(rf/dispatch-sync [:save-layout])} "SAVE"]]
    [:div
-    [:button.button {:on-click #(rf/dispatch [:add-widget "one" "alpha" "one"])} "Add \"one\""]
-    [:button.button {:on-click #(rf/dispatch [:add-widget "two" "alpha" "two"])} "Add \"two\""]
-    [:button.button {:on-click #(rf/dispatch [:add-widget "three" "alpha" "one"])} "Add \"three\""]]
+    [:button.button
+     {:on-click #(rf/dispatch
+                   [:add-widget "one" "one" (get @registry/registry "alpha")])}
+     "Add \"one\""]
+    [:button.button
+     {:on-click #(rf/dispatch
+                   [:add-widget "two" "two" (get @registry/registry "alpha")])}
+     "Add \"two\""]
+    [:button.button
+     {:on-click #(rf/dispatch
+                   [:add-widget "three" "one" (get @registry/registry "beta")])}
+     "Add \"three\""]]
    [timers]
    ;[simple-grid]
    ;[simple-responsive-grid]])
