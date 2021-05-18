@@ -366,7 +366,7 @@
      "Add \"three\""]]
    [timers]
    ;[simple-grid]
-   [simple-responsive-grid]
+   ;[simple-responsive-grid]
    [responsive-grid]])
 
 ;; endregion
