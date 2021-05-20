@@ -13,18 +13,19 @@
 
 (def default-db {:widgets {}
                  :layout {}
-                 :timers {"one" 0 "two" 0}})
+                 :timers {"one" 0 "two" 0}
+                 :global {"one" 1 "four" 4}})
 
-(def default-layout {:x 0 :y 0 :w 2 :h 3})
+(def default-layout {:x 0 :y 0 :w 2 :h 4})
 
 (def starting-widgets {"one"  {:name   "one" :type "alpha"
                                :title "one"
-                               :data "one" :local 0
-                               :layout {:i "one" :x 0 :y 0 :w 2 :h 3}}
+                               :data "one" :local 0 :global "one"
+                               :layout {:i "one" :x 0 :y 0 :w 2 :h 4}}
                        "four" {:name   "four" :type "alpha"
                                :title "four"
-                               :data "two" :local 0
-                               :layout {:i "four" :x 4 :y 0 :w 2 :h 3}}})
+                               :data "two" :local 0 :global "four"
+                               :layout {:i "four" :x 4 :y 0 :w 2 :h 4}}})
 
 (def widget-store (atom starting-widgets))
 
@@ -61,6 +62,18 @@
   :timers
   (fn [db _]
     (:timers db)))
+
+
+(rf/reg-sub
+  :globals
+  (fn [db _]
+    (:global db)))
+
+
+(rf/reg-sub
+  :global
+  (fn [db [_ widget-id]]
+    (get-in db [:global widget-id])))
 
 
 (rf/reg-sub
@@ -114,7 +127,8 @@
             (-> %
               (assoc-in [:layout name] (assoc default-layout :i name))
               (assoc-in [:widgets name] (merge locals
-                                          {:name name :title name :type type :data data}))
+                                          {:name name :title name :type type
+                                           :data data :global name}))
               ((fn [x] (if (contains? (:timers db) data)
                          x
                          (assoc-in x [:timers data] 0)))))))))))
@@ -157,6 +171,14 @@
   (fn-traced [db [_ widget-id]]
     (let [local (get-in db [:widgets widget-id :local])]
       (assoc-in db [:widgets widget-id :local] (inc local)))))
+
+
+(rf/reg-event-db
+  :global
+  (fn-traced [db [_ widget-id new-val]]
+    (assoc-in db [:global widget-id] new-val)))
+
+
 
 
 (rf/reg-event-db
@@ -353,6 +375,13 @@
                 [:div {:on-click #(rf/dispatch [:tick-one k])} t])
            @timers))])))
 
+(defn- globals []
+  (let [globals (rf/subscribe [:globals])]
+    (fn []
+      [:div#globals.flex-container {:style {:background-color :green}}
+       (doall
+         (map (fn [[k t]] ^{:key k} [:div  t]) @globals))])))
+
 
 (defn- main-page []
   (log/info "main-page")
@@ -375,6 +404,7 @@
                    [:add-widget "three" "one" (get @registry/registry "beta")])}
      "Add \"three\""]]
    [timers]
+   [globals]
    ;[simple-grid]])
    ;[simple-responsive-grid]
    [responsive-grid]])

@@ -7,15 +7,19 @@
             [simple-grid.widget.registry :as registry]))
 
 
+
+
 (defn- make-content
   "FORM-1 by de-ref's ':data' and ':local'"
   [widget]
   (let [data  @(rf/subscribe [:timer (:data widget)])
-        local @(rf/subscribe [:local (:name widget)])]
+        global @(rf/subscribe [:global (:name widget)])]
     [:div
      [:button.button {:on-click #(rf/dispatch [:reset (:data widget)])} "reset"]
      [:button.button {:on-click #(rf/dispatch [:local (:name widget)])} "local"]
-     [:p (str "local: " local)]
+     [:button.button {:on-click #(rf/dispatch [:global (:name widget) (rand-int 100)])} "global"]
+     [:p (str "local: " (:local widget))]
+     [:p (str "global: " global)]
      [:p (str "timer " (:data widget) ": " data)]]))
 
 
