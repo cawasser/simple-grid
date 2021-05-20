@@ -38,15 +38,13 @@
 (rf/reg-sub
   :layout
   (fn [db _]
-    (vals (:layout db))))
-
+    (or (vals (:layout db)) [])))
 
 
 (rf/reg-sub
   :widget
   (fn [db [_ widget-id]]
     (get-in db [:widgets widget-id])))
-
 
 
 (rf/reg-sub
@@ -59,6 +57,12 @@
   :timers
   (fn [db _]
     (:timers db)))
+
+
+(rf/reg-sub
+  :renders
+  (fn [db _]
+    (:renders db)))
 
 
 (rf/reg-sub
@@ -106,25 +110,11 @@
             (-> %
               (assoc-in [:layout name] (assoc default-layout :i name))
               (assoc-in [:widgets name] (merge locals
-                                          {:name name :type type :data data}))
+                                          {:name name :title name :type type :data data}))
               ((fn [x] (if (contains? (:timers db) data)
                          x
                          (assoc-in x [:timers data] 0)))))))))))
 
-
-(comment
-  (rf/dispatch-sync [:init default-db])
-  (:widgets @re-frame.db/app-db)
-  (rf/dispatch [:add-widget "one" "one" (get @registry/registry "alpha")])
-  (rf/dispatch [:add-widget "three" "one" (get @registry/registry "beta")])
-  (rf/dispatch [:add-widget "ten" "ten" (get @registry/registry "beta")])
-
-  (def widget-def (get @registry/registry "alpha"))
-  (def locals (:config widget-def))
-  (merge locals
-    {:name name :type type :data data})
-
-  ())
 
 (rf/reg-event-db
   :tick
@@ -135,6 +125,15 @@
                   (assoc new-map key (inc value)))
                 {}
                 (:timers db)))))
+
+
+(rf/reg-event-db
+  :re-title
+  (fn-traced [db [_ name]]
+    (let [new-val (str (rand 30))
+          old-val (get-in db [:widgets name :title])]
+      (log/info ":re-title" name old-val new-val)
+      (assoc-in db [:widgets name :title] new-val))))
 
 
 (rf/reg-event-db
@@ -216,18 +215,26 @@
 
 (defn- title-bar
   "FORM-1"
-  [name]
-  [:div.widget-banner.title-wrapper.grid-toolbar.move-cursor
-   [:h3 {:style {:color :black}} name]
-   [:button.button {:on-click #(rf/dispatch [:delete-widget name])} "Delete"]])
+  [widget]
+  (log/info "title-bar" (:name widget))
+
+  (let [widget-id (:name widget)
+        title (:title widget)]
+    [:div.widget-banner.title-wrapper.grid-toolbar.move-cursor
+     [:h3 {:style {:color :black}} title]
+     [:button.button {:on-click #(rf/dispatch [:delete-widget widget-id])} "Delete"]
+     [:button.button {:on-click #(rf/dispatch [:re-title widget-id])} "Title"]]))
 
 
 (defn- base
   "FORM-1"
-  [name content]
+  [widget]
+  (log/info "base" widget)
+
   [:div.widget-parent
-   (title-bar name)
-   [:div.widget.widget-content content]])
+   (title-bar widget)
+   [:div.widget.widget-content
+    (make-content widget)]])
 
 
 (defn- widget
@@ -235,11 +242,10 @@
   [name]
   (log/info "widget OUTER" name)
 
-  (let [widget @(rf/subscribe [:widget name])]
+  (let [widget (rf/subscribe [:widget name])]
     (fn []
-      (log/info "widget INNER" name)
-      (base name
-        (make-content widget)))))
+      (log/info "widget INNER" @widget)
+      (base @widget))))
 
 
 ;; endregion
@@ -336,7 +342,7 @@
 (defn- timers []
   (let [timers (rf/subscribe [:timers])]
     (fn []
-      [:div.flex-container
+      [:div#timers.flex-container
        [:button.button {:on-click #(rf/dispatch-sync [:tick])} "Tick!"]
        (doall
          (map (fn [[k t]] ^{:key k}
@@ -365,7 +371,7 @@
                    [:add-widget "three" "one" (get @registry/registry "beta")])}
      "Add \"three\""]]
    [timers]
-   ;[simple-grid]
+   ;[simple-grid]])
    ;[simple-responsive-grid]
    [responsive-grid]])
 
@@ -373,13 +379,14 @@
 
 
 (defn- ^:dev/after-load-async mount-components []
-  (rf/dispatch-sync [:init default-db])
+
   (rd/render #'main-page (.getElementById js/document "app")))
 
 
 (defn main []
   (log/info "Running!")
 
+  (rf/dispatch-sync [:init default-db])
   (mount-components))
 
 
@@ -520,6 +527,21 @@
 
   (rf/dispatch-sync [:save])
 
+
+  ())
+
+
+(comment
+  (rf/dispatch-sync [:init default-db])
+  (:widgets @re-frame.db/app-db)
+  (rf/dispatch [:add-widget "one" "one" (get @registry/registry "alpha")])
+  (rf/dispatch [:add-widget "three" "one" (get @registry/registry "beta")])
+  (rf/dispatch [:add-widget "ten" "ten" (get @registry/registry "beta")])
+
+  (def widget-def (get @registry/registry "alpha"))
+  (def locals (:config widget-def))
+  (merge locals
+    {:name name :type type :data data})
 
   ())
 
