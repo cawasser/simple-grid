@@ -19,6 +19,7 @@
 (rf/reg-event-db
   :append-global
   (fn-traced [db [_ widget-id val]]
+    (log/info ":append-global" widget-id val)
     (let [old-val (get-in db [:global widget-id])]
       (assoc-in db [:global widget-id] (conj old-val val)))))
 
@@ -35,7 +36,7 @@
   ^{:key idx} [:tr [:td item]])
 
 
-(defn- table [data]
+(defn- table [title data]
   [:div.table-container {:style {:width       "50%"
                                  :height      "5em"
                                  :overflow-y  :auto
@@ -46,7 +47,7 @@
     [:thead {:style {:width  "100%"
                      :border      "1px outset dark-blue"
                      :color  :black}}
-     [:tr [:th "Value"]]]
+     [:tr [:th title]]]
     [:tbody
      (doall
        (for [[idx item] (map-indexed vector data)]
@@ -62,8 +63,8 @@
      [:button.button {:on-click #(rf/dispatch [:append-local (:name widget) (rand-int 30)])} "local"]
      [:button.button {:on-click #(rf/dispatch [:append-global (:name widget) (rand-int 30)])} "global"]
      [:div.flex-container
-      (table local)
-      (table global)]]))
+      (table "Local" (:local widget))
+      (table "Global" global)]]))
 
 
 

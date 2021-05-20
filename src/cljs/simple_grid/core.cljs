@@ -17,9 +17,13 @@
 
 (def default-layout {:x 0 :y 0 :w 2 :h 3})
 
-(def starting-widgets {"one"  {:name   "one" :type "alpha" :data "one" :local 0
+(def starting-widgets {"one"  {:name   "one" :type "alpha"
+                               :title "one"
+                               :data "one" :local 0
                                :layout {:i "one" :x 0 :y 0 :w 2 :h 3}}
-                       "four" {:name   "four" :type "alpha" :data "two" :local 0
+                       "four" {:name   "four" :type "alpha"
+                               :title "four"
+                               :data "two" :local 0
                                :layout {:i "four" :x 4 :y 0 :w 2 :h 3}}})
 
 (def widget-store (atom starting-widgets))
