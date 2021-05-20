@@ -14,7 +14,7 @@
 (def default-db {:widgets {}
                  :layout {}
                  :timers {"one" 0 "two" 0}
-                 :global {"one" 1 "four" 4}})
+                 :global {"one" 1 "two" 2 "four" 4}})
 
 (def default-layout {:x 0 :y 0 :w 2 :h 4})
 
@@ -242,7 +242,7 @@
 (defn- title-bar
   "FORM-1"
   [widget]
-  (log/info "title-bar" (:name widget))
+  ;(log/info "title-bar" (:name widget))
 
   (let [widget-id (:name widget)
         title (:title widget)]
@@ -255,7 +255,7 @@
 (defn- base
   "FORM-1"
   [widget]
-  (log/info "base" widget)
+  ;(log/info "base" widget)
 
   (let [global (rf/subscribe [:global (:global widget)])]
     [:div.widget-parent
@@ -376,6 +376,8 @@
                 [:div {:on-click #(rf/dispatch [:tick-one k])} t])
            @timers))])))
 
+
+
 (defn- globals []
   (let [globals (rf/subscribe [:globals])]
     (fn []
@@ -406,7 +408,7 @@
      {:on-click #(rf/dispatch
                    [:add-widget "three" "one" (get @registry/registry "beta")])}
      "Add \"three\""]]
-   [timers]
+   ;[timers]
    [globals]
    ;[simple-grid]])
    ;[simple-responsive-grid]

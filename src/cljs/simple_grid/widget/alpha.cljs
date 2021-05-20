@@ -12,13 +12,10 @@
 (defn- make-content
   "FORM-1 by de-ref's ':data' and ':local'"
   [widget global]
-  (let [data  @(rf/subscribe [:timer (:data widget)])]
-    [:div
-     [:button.button {:on-click #(rf/dispatch [:reset (:data widget)])} "reset"]
-     [:button.button {:on-click #(rf/dispatch [:local (:name widget)])} "local"]
-     [:p (str "local: " (:local widget))]
-     [:p (str "global: " global)]
-     [:p (str "timer " (:data widget) ": " data)]]))
+  [:div
+   [:button.button {:on-click #(rf/dispatch [:local (:name widget)])} "local"]
+   [:p (str "local: " (:local widget))]
+   [:p (str "global: " global)]])
 
 
 
