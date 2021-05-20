@@ -56,15 +56,13 @@
 
 (defn- make-content
   "FORM-1 by de-ref's ':data' and ':local'"
-  [widget]
-  (let [global @(rf/subscribe [:global (:name widget)])
-        local  @(rf/subscribe [:local (:name widget)])]
-    [:div
-     [:button.button {:on-click #(rf/dispatch [:append-local (:name widget) (rand-int 30)])} "local"]
-     [:button.button {:on-click #(rf/dispatch [:append-global (:name widget) (rand-int 30)])} "global"]
-     [:div.flex-container
-      (table "Local" (:local widget))
-      (table "Global" global)]]))
+  [widget global]
+  [:div
+   [:button.button {:on-click #(rf/dispatch [:append-local (:name widget) (rand-int 30)])} "local"]
+   [:button.button {:on-click #(rf/dispatch [:append-global (:name widget) (rand-int 30)])} "global"]
+   [:div.flex-container
+    (table "Local" (:local widget))
+    (table "Global" global)]])
 
 
 

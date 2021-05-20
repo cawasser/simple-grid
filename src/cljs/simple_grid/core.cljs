@@ -233,10 +233,10 @@
 
 (defn- make-content
   "FORM-1"
-  [widget]
+  [widget global]
   (let [type     (:type widget)
         build-fn (get-in @registry/registry [type :build-fn])]
-    (build-fn widget)))
+    (build-fn widget global)))
 
 
 (defn- title-bar
@@ -257,10 +257,11 @@
   [widget]
   (log/info "base" widget)
 
-  [:div.widget-parent
-   (title-bar widget)
-   [:div.widget.widget-content
-    (make-content widget)]])
+  (let [global (rf/subscribe [:global (:global widget)])]
+    [:div.widget-parent
+     (title-bar widget)
+     [:div.widget.widget-content
+      (make-content widget @global)]]))
 
 
 (defn- widget
@@ -380,7 +381,9 @@
     (fn []
       [:div#globals.flex-container {:style {:background-color :green}}
        (doall
-         (map (fn [[k t]] ^{:key k} [:div  t]) @globals))])))
+         (map (fn [[k t]]
+                ^{:key k} [:div {:on-click #(rf/dispatch [:global k (rand-int 100)])} t])
+           @globals))])))
 
 
 (defn- main-page []
